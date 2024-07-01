@@ -6,6 +6,7 @@
   "engines": {
     "vscode": "^1.60.0"
   },
+  "publisher": "rossnmiller",
   "license": "MIT",
   "repository": {
     "type": "git",
