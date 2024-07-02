@@ -13,6 +13,27 @@ This Visual Studio Code extension allows you to quickly navigate to the next ESL
 - Visual Studio Code v1.60.0 or higher
 - ESLint must be installed and configured in your workspace
 
+Create a `.vscode/tasks.json` in your folder that looks something like this:
+
+```json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run ESLint on all files",
+      "type": "shell",
+      "command": "npx eslint .",
+      "problemMatcher": "$eslint-stylish",
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}
+```
+
+(this is required in order to run eslint when the project first opens)
+
 ## Installation
 
 1. Open Visual Studio Code
@@ -21,7 +42,7 @@ This Visual Studio Code extension allows you to quickly navigate to the next ESL
 
 ## Usage
 
-After installation, you can use the extension as follows:
+After installation,**** you can use the extension as follows:
 
 1. Open a project with ESLint configured
 2. Use the keyboard shortcut `Alt+Shift+E` (or `Option+Shift+E` on macOS) to jump to the next ESLint error
