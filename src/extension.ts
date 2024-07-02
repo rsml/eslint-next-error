@@ -1,28 +1,24 @@
 import * as vscode from 'vscode';
 
-interface ProblemWithUri {
-    uri: vscode.Uri;
-    diagnostic: vscode.Diagnostic;
-}
-
 export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand('eslint-next-error.jumpToNextError', async () => {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders) {
+        if (!vscode.workspace.workspaceFolders) {
             vscode.window.showInformationMessage('No workspace folder is open.');
             return;
         }
 
-        const allProblems: ProblemWithUri[] = [];
-        for (const folder of workspaceFolders) {
-            const diagnostics = await vscode.languages.getDiagnostics(folder.uri);
+        const allProblems = [];
+        // Retrieve diagnostics for all files that VS Code has processed
+        const allDiagnostics = vscode.languages.getDiagnostics();
+        for (const [uri, diagnostics] of allDiagnostics) {
             for (const diagnostic of diagnostics) {
                 if (diagnostic.source === 'eslint') {
-                    allProblems.push({ uri: folder.uri, diagnostic });
+                    allProblems.push({ uri, diagnostic });
                 }
             }
         }
 
+        // Sort and find problems as in the previous version of your function
         const eslintProblems = allProblems.sort((a, b) =>
             a.uri.fsPath.localeCompare(b.uri.fsPath) ||
             a.diagnostic.range.start.line - b.diagnostic.range.start.line ||
@@ -30,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
         );
 
         if (eslintProblems.length === 0) {
-            vscode.window.showInformationMessage('No ESLint errors found in the workspace.');
+            vscode.window.showInformationMessage('No ESLint errors found in the open files.');
             return;
         }
 
@@ -42,13 +38,11 @@ export function activate(context: vscode.ExtensionContext) {
             nextProblemIndex = eslintProblems.findIndex(problem =>
                 problem.uri.fsPath === currentDocument.uri.fsPath &&
                 (problem.diagnostic.range.start.line > currentPosition.line ||
-                 (problem.diagnostic.range.start.line === currentPosition.line &&
-                  problem.diagnostic.range.start.character > currentPosition.character))
-            );
+                (problem.diagnostic.range.start.line === currentPosition.line &&
+                problem.diagnostic.range.start.character > currentPosition.character)));
+
             if (nextProblemIndex === -1) {
-                nextProblemIndex = eslintProblems.findIndex(problem =>
-                    problem.uri.fsPath > currentDocument.uri.fsPath
-                );
+                nextProblemIndex = eslintProblems.findIndex(problem => problem.uri.fsPath > currentDocument.uri.fsPath);
             }
         }
 
@@ -59,7 +53,11 @@ export function activate(context: vscode.ExtensionContext) {
         const nextProblem = eslintProblems[nextProblemIndex];
         const document = await vscode.workspace.openTextDocument(nextProblem.uri);
         const editor = await vscode.window.showTextDocument(document);
-        editor.selection = new vscode.Selection(nextProblem.diagnostic.range.start, nextProblem.diagnostic.range.end);
+
+        editor.selection = new vscode.Selection(
+            nextProblem.diagnostic.range.start,
+            nextProblem.diagnostic.range.end
+        );
         editor.revealRange(nextProblem.diagnostic.range, vscode.TextEditorRevealType.InCenter);
 
         vscode.window.showInformationMessage(`ESLint error: ${nextProblem.diagnostic.message}`);

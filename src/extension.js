@@ -46,7 +46,7 @@ function activate(context) {
             a.diagnostic.range.start.line - b.diagnostic.range.start.line ||
             a.diagnostic.range.start.character - b.diagnostic.range.start.character);
         if (eslintProblems.length === 0) {
-            vscode.window.showInformationMessage('No ESLint errors found in the workspace.');
+            vscode.window.showInformationMessage('No ESLint errors found in the open files.');
             return;
         }
         const currentDocument = vscode.window.activeTextEditor?.document;
